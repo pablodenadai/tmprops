@@ -1,3 +1,3 @@
-import {Foo} from './src'
+const getProps = require('./src/index')
 
-console.log(Foo)
+getProps()
