@@ -10,9 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "crypto": "0.0.3",
+    "co": "^4.6.0",
     "got": "^6.7.1",
-    "oauth-1.0a": "^2.1.0"
+    "mongoose": "^4.9.0"
   },
   "devDependencies": {
     "ava": "^0.18.2",

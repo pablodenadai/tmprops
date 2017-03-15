@@ -1,27 +1,42 @@
-const crypto = require('crypto')
+const co = require('co')
 const got = require('got')
-const oauth = require('oauth-1.0a')
+
+if (!process.env.TM_CONSUMER_KEY || !process.env.TM_CONSUMER_SECRET) {
+	throw new Error('Please set Consumer Key and Consumer Secret environment variables')
+}
 
 console.log('process.env.TM_CONSUMER_KEY', process.env.TM_CONSUMER_KEY)
 console.log('process.env.TM_CONSUMER_SECRET', process.env.TM_CONSUMER_SECRET)
 
-const authorization = oauth({
-	consumer: {
-		key: process.env.TM_CONSUMER_KEY,
-		secret: process.env.TM_CONSUMER_SECRET
-	},
-	signature_method: 'HMAC-SHA1', // eslint-disable-line camelcase
-	hash_function: (baseString, key) => crypto.createHmac('sha1', key).update(baseString).digest('base64') // eslint-disable-line camelcase
-})
-
 const url = 'https://api.tmsandbox.co.nz/v1/Search/Property/Rental.json'
 
-module.exports = () => got(url, {
-	headers: authorization.toHeader(authorization.authorize({url, method: 'GET'}))
+const fetchPage = (url, page) => {
+	console.log(`fetching page ${page}`)
+
+	return got(url, {
+		headers: {Authorization: `OAuth oauth_consumer_key=${process.env.TM_CONSUMER_KEY}, oauth_signature_method=PLAINTEXT, oauth_signature=${process.env.TM_CONSUMER_SECRET}&`},
+		query: {Page: page},
+		json: true
+	})
+}
+
+const insertMany = list => {
+	console.log(`inserting ${list.length} items`)
+	return Promise.resolve(true)
+}
+
+const fetchAndCache = co.wrap(function * (url) {
+	let page = 1
+	let data
+
+	do {
+		data = yield fetchPage(url, page)
+		yield insertMany(data.body.List)
+		page++
+		if (page > 3) {
+			break
+		}
+	} while (data.body.List.length)
 })
-.then(res => {
-	console.log('body', res.body)
-})
-.catch(err => {
-	console.log('err', err)
-})
+
+module.exports = () => fetchAndCache(url)

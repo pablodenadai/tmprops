@@ -1,3 +1,3 @@
-const getProps = require('./src/index')
+const fetchAndCache = require('./src/index')
 
-getProps()
+fetchAndCache()
